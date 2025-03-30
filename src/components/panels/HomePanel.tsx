@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Send, Cloud, Brain, Eye } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from "@/integrations/supabase/client";
 
 interface Message {
   id: string;
@@ -18,6 +20,8 @@ interface Message {
 
 export const HomePanel: React.FC = () => {
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -27,10 +31,11 @@ export const HomePanel: React.FC = () => {
     }
   ]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
+    // Create and add user message
     const userMessage: Message = {
       id: Date.now().toString(),
       text: input,
@@ -38,19 +43,73 @@ export const HomePanel: React.FC = () => {
       timestamp: new Date()
     };
 
-    setMessages([...messages, userMessage]);
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setIsLoading(true);
 
-    // Simulate Argo's response
-    setTimeout(() => {
-      const argoResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: "I'll process that request right away. Working on it now...",
+    try {
+      // Show a "thinking" message
+      const thinkingMessage: Message = {
+        id: `thinking-${Date.now()}`,
+        text: "I'm processing that request...",
         sender: 'argo',
         timestamp: new Date()
       };
+      setMessages(prev => [...prev, thinkingMessage]);
+
+      // Call the Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('chat', {
+        body: {
+          user_id: crypto.randomUUID(), // Use actual user ID if available
+          message: userMessage.text
+        }
+      });
+
+      // Remove the thinking message
+      setMessages(prev => prev.filter(msg => msg.id !== thinkingMessage.id));
+
+      if (error) {
+        console.error('Error calling chat function:', error);
+        toast({
+          title: "Communication Error",
+          description: "I couldn't reach my brain. Please try again.",
+          variant: "destructive",
+        });
+        
+        // Add error message
+        const errorMessage: Message = {
+          id: Date.now().toString(),
+          text: "I'm having trouble connecting to my services. Please try again in a moment.",
+          sender: 'argo',
+          timestamp: new Date()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+        return;
+      }
+
+      // Process the successful response
+      const responseText = data?.response || data?.message || "I've received your message and am working on it.";
+      
+      // Add Argo's response
+      const argoResponse: Message = {
+        id: Date.now().toString(),
+        text: responseText,
+        sender: 'argo',
+        timestamp: new Date()
+      };
+      
       setMessages(prev => [...prev, argoResponse]);
-    }, 1000);
+      
+    } catch (err) {
+      console.error('Unexpected error in chat handling:', err);
+      toast({
+        title: "System Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const panelItemVariants = {
@@ -145,11 +204,13 @@ export const HomePanel: React.FC = () => {
                 placeholder="What would you like me to do?"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
+                disabled={isLoading}
                 className="flex-grow bg-background text-white border-muted focus-visible:ring-argo-accent"
               />
               <Button 
                 type="submit" 
                 className="bg-argo-accent text-black hover:bg-argo-accent/90"
+                disabled={isLoading || !input.trim()}
               >
                 <Send size={18} />
               </Button>
