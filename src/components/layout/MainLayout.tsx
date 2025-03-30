@@ -52,49 +52,49 @@ export const MainLayout: React.FC = () => {
             <Menu size={22} className="text-argo-accent" />
           </motion.button>
 
-          <TabsTrigger
-            value="home"
-            onClick={() => setActiveTab("home")}
-            className={cn(
-              "w-full flex justify-center p-3 rounded-2xl hover:bg-muted transition-colors",
-              activeTab === "home" && "bg-muted text-argo-accent"
-            )}
-          >
-            <Terminal size={22} />
-          </TabsTrigger>
+          <Tabs value={activeTab} onValueChange={setActiveTab} orientation="vertical" className="w-full">
+            <TabsList className="flex flex-col items-center gap-1 bg-transparent border-none p-0">
+              <TabsTrigger
+                value="home"
+                className={cn(
+                  "w-full flex justify-center p-3 rounded-2xl hover:bg-muted transition-colors",
+                  activeTab === "home" && "bg-muted text-argo-accent"
+                )}
+              >
+                <Terminal size={22} />
+              </TabsTrigger>
 
-          <TabsTrigger
-            value="memory"
-            onClick={() => setActiveTab("memory")}
-            className={cn(
-              "w-full flex justify-center p-3 rounded-2xl hover:bg-muted transition-colors",
-              activeTab === "memory" && "bg-muted text-argo-accent"
-            )}
-          >
-            <Brain size={22} />
-          </TabsTrigger>
+              <TabsTrigger
+                value="memory"
+                className={cn(
+                  "w-full flex justify-center p-3 rounded-2xl hover:bg-muted transition-colors",
+                  activeTab === "memory" && "bg-muted text-argo-accent"
+                )}
+              >
+                <Brain size={22} />
+              </TabsTrigger>
 
-          <TabsTrigger
-            value="tools"
-            onClick={() => setActiveTab("tools")}
-            className={cn(
-              "w-full flex justify-center p-3 rounded-2xl hover:bg-muted transition-colors",
-              activeTab === "tools" && "bg-muted text-argo-accent"
-            )}
-          >
-            <Wrench size={22} />
-          </TabsTrigger>
+              <TabsTrigger
+                value="tools"
+                className={cn(
+                  "w-full flex justify-center p-3 rounded-2xl hover:bg-muted transition-colors",
+                  activeTab === "tools" && "bg-muted text-argo-accent"
+                )}
+              >
+                <Wrench size={22} />
+              </TabsTrigger>
 
-          <TabsTrigger
-            value="sentinel"
-            onClick={() => setActiveTab("sentinel")}
-            className={cn(
-              "w-full flex justify-center p-3 rounded-2xl hover:bg-muted transition-colors",
-              activeTab === "sentinel" && "bg-muted text-argo-accent"
-            )}
-          >
-            <Shield size={22} />
-          </TabsTrigger>
+              <TabsTrigger
+                value="sentinel"
+                className={cn(
+                  "w-full flex justify-center p-3 rounded-2xl hover:bg-muted transition-colors",
+                  activeTab === "sentinel" && "bg-muted text-argo-accent"
+                )}
+              >
+                <Shield size={22} />
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
         </div>
       </motion.div>
 
