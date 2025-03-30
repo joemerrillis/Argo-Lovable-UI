@@ -57,38 +57,27 @@ export const HomePanel: React.FC = () => {
       };
       setMessages(prev => [...prev, thinkingMessage]);
 
-      // Call the Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('chat', {
-        body: {
-          user_id: crypto.randomUUID(), // Use actual user ID if available
+      // Call the new API endpoint
+      const response = await fetch('https://api.argoassist.com/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 'test-user', // Fixed test user as requested
           message: userMessage.text
-        }
+        })
       });
 
       // Remove the thinking message
       setMessages(prev => prev.filter(msg => msg.id !== thinkingMessage.id));
 
-      if (error) {
-        console.error('Error calling chat function:', error);
-        toast({
-          title: "Communication Error",
-          description: "I couldn't reach my brain. Please try again.",
-          variant: "destructive",
-        });
-        
-        // Add error message
-        const errorMessage: Message = {
-          id: Date.now().toString(),
-          text: "I'm having trouble connecting to my services. Please try again in a moment.",
-          sender: 'argo',
-          timestamp: new Date()
-        };
-        setMessages(prev => [...prev, errorMessage]);
-        return;
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
       }
 
       // Process the successful response
-      const responseText = data?.response || data?.message || "I've received your message and am working on it.";
+      const data = await response.json();
+      // Extract the message from different possible response formats
+      const responseText = data?.reply_message || data?.data?.message || data?.data?.response || "I've received your message and am working on it.";
       
       // Add Argo's response
       const argoResponse: Message = {
@@ -100,13 +89,35 @@ export const HomePanel: React.FC = () => {
       
       setMessages(prev => [...prev, argoResponse]);
       
+      // Optional: store in Supabase memory
+      try {
+        await supabase.from('memory').insert({
+          user_id: 'test-user',
+          input: userMessage.text,
+          response: responseText,
+          source: 'ui'
+        });
+      } catch (memoryError) {
+        console.error('Failed to store in memory:', memoryError);
+        // Don't show error toast for memory storage failure
+      }
+      
     } catch (err) {
-      console.error('Unexpected error in chat handling:', err);
+      console.error('Error in chat handling:', err);
       toast({
-        title: "System Error",
-        description: "Something went wrong. Please try again.",
+        title: "Communication Error",
+        description: "There was a problem connecting to Argo's brain. Please try again.",
         variant: "destructive",
       });
+      
+      // Add error message
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        text: "I'm having trouble connecting to my services. Please try again in a moment.",
+        sender: 'argo',
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
