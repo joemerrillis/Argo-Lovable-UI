@@ -12,4 +12,5 @@ EXPOSE 8000
 
 ENV PORT=8000
 
-CMD ["bun", "run", "start"]
+CMD ["bun", "x", "vite", "preview", "--port", "8000", "--host"]
+
