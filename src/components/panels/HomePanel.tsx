@@ -4,7 +4,6 @@ import { motion } from 'framer-motion';
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from "@/integrations/supabase/client";
 import { ChatHeader } from '../chat/ChatHeader';
 import { ChatMessages } from '../chat/ChatMessages';
 import { ChatInputForm } from '../chat/ChatInputForm';
@@ -78,18 +77,6 @@ export const HomePanel: React.FC = () => {
       
       setMessages(prev => [...prev, argoResponse]);
       
-      // Optional: store in Supabase memory
-      try {
-        await supabase.from('memory').insert({
-          user_id: 'test-user',
-          input: input,
-          response: responseText,
-          source: 'ui'
-        });
-      } catch (memoryError) {
-        console.error('Failed to store in memory:', memoryError);
-        // Don't show error toast for memory storage failure
-      }
       
     } catch (err) {
       console.error('Error in chat handling:', err);
